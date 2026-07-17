@@ -48,10 +48,9 @@ class _GitHubProjectBoardScreenState extends State<GitHubProjectBoardScreen> {
               : null,
           title: _projectSelector(),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed:
-                  _vm.status == BoardStatus.loading ? null : _vm.refresh,
+            _RefreshButton(
+              busy: _vm.isRefreshing || _vm.status == BoardStatus.loading,
+              onPressed: _vm.refresh,
             ),
             IconButton(
               icon: const Icon(Icons.settings_outlined),
@@ -150,7 +149,6 @@ class _GitHubProjectBoardScreenState extends State<GitHubProjectBoardScreen> {
         return _StatusColumn(
           option: opt,
           cards: cards,
-          onRefresh: _vm.refresh,
           onDropped: (card) {
             if (opt != null) _vm.moveCard(card, opt.id);
           },
@@ -269,18 +267,76 @@ class _GitHubProjectBoardScreenState extends State<GitHubProjectBoardScreen> {
   }
 }
 
+/// Refresh button that spins while a refresh is in flight. Even when the
+/// refresh finishes quickly it completes a full turn, so a tap always gives
+/// visible feedback.
+class _RefreshButton extends StatefulWidget {
+  const _RefreshButton({required this.busy, required this.onPressed});
+
+  final bool busy;
+  final VoidCallback onPressed;
+
+  @override
+  State<_RefreshButton> createState() => _RefreshButtonState();
+}
+
+class _RefreshButtonState extends State<_RefreshButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _spin = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.busy) _spin.repeat();
+  }
+
+  @override
+  void didUpdateWidget(_RefreshButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.busy && !oldWidget.busy) {
+      _spin.repeat();
+    } else if (!widget.busy && oldWidget.busy) {
+      // Finish the current turn instead of stopping abruptly.
+      _spin.stop();
+      _spin.forward().whenComplete(_spin.reset);
+    }
+  }
+
+  @override
+  void dispose() {
+    _spin.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: '更新',
+      onPressed: widget.busy ? null : widget.onPressed,
+      icon: RotationTransition(
+        turns: _spin,
+        child: Icon(
+          Icons.refresh,
+          color: widget.busy ? Theme.of(context).colorScheme.primary : null,
+        ),
+      ),
+    );
+  }
+}
+
 class _StatusColumn extends StatelessWidget {
   const _StatusColumn({
     required this.option,
     required this.cards,
-    required this.onRefresh,
     required this.onDropped,
     required this.onCardTap,
   });
 
   final StatusOption? option;
   final List<BoardCard> cards;
-  final Future<void> Function() onRefresh;
   final ValueChanged<BoardCard> onDropped;
   final ValueChanged<BoardCard> onCardTap;
 
@@ -330,15 +386,11 @@ class _StatusColumn extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: RefreshIndicator(
-                onRefresh: onRefresh,
-                child: ListView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                  itemCount: cards.length,
-                  itemBuilder: (context, i) =>
-                      _draggableCard(context, cards[i]),
-                ),
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                itemCount: cards.length,
+                itemBuilder: (context, i) =>
+                    _draggableCard(context, cards[i]),
               ),
             ),
           ],

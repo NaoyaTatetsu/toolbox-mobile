@@ -16,6 +16,11 @@ class BoardViewModel extends ChangeNotifier {
   final TokenStore _store;
 
   BoardStatus status = BoardStatus.initial;
+
+  /// True while a refresh is in flight (even when the current board stays
+  /// visible). Drives the refresh button's spinner.
+  bool isRefreshing = false;
+
   String? errorMessage;
   String? _token;
   List<Project> projects = const [];
@@ -76,8 +81,9 @@ class BoardViewModel extends ChangeNotifier {
     // Keep showing the current board during pull-to-refresh.
     if (board == null) {
       status = BoardStatus.loading;
-      notifyListeners();
     }
+    isRefreshing = true;
+    notifyListeners();
     try {
       projects = await _api.listProjects(_token!);
       if (projects.isNotEmpty &&
@@ -96,6 +102,7 @@ class BoardViewModel extends ChangeNotifier {
       errorMessage = e.toString();
       status = board == null ? BoardStatus.error : BoardStatus.ready;
     }
+    isRefreshing = false;
     notifyListeners();
   }
 
