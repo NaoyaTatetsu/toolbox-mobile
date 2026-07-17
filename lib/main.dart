@@ -31,7 +31,7 @@ class MyToolBoxApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'My Tool Box',
+      title: 'Tool Box Mobile',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2DA44E)),
@@ -93,7 +93,7 @@ class _AppShellState extends State<AppShell> {
               Icon(Icons.home_repair_service,
                   color: theme.colorScheme.primary),
               const SizedBox(width: 12),
-              Text('My Tool Box', style: theme.textTheme.titleMedium),
+              Text('Tool Box Mobile', style: theme.textTheme.titleMedium),
             ],
           ),
         ),
