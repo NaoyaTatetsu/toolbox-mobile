@@ -111,8 +111,14 @@ query(\$id:ID!) {
           id
           content {
             __typename
-            ... on Issue { title number url }
-            ... on PullRequest { title number url }
+            ... on Issue {
+              title number url
+              labels(first:10) { nodes { name color } }
+            }
+            ... on PullRequest {
+              title number url
+              labels(first:10) { nodes { name color } }
+            }
             ... on DraftIssue { title }
           }
           fieldValueByName(name:"Status") {
@@ -134,6 +140,8 @@ query(\$id:ID!) {
               }
               ... on ProjectV2ItemFieldSingleSelectValue {
                 optionId
+                name
+                color
                 field { ... on ProjectV2FieldCommon { name } }
               }
               ... on ProjectV2ItemFieldIterationValue {
@@ -185,6 +193,8 @@ query(\$id:ID!) {
         statusOptionId: statusValue is Map<String, dynamic>
             ? statusValue['optionId'] as String?
             : null,
+        labels: _parseLabels(content['labels']),
+        fields: _parseDisplayFields(raw['fieldValues']),
       ));
       values[itemId] = _parseFieldValues(raw['fieldValues']);
     }
@@ -195,6 +205,57 @@ query(\$id:ID!) {
       statusOptions: statusOptions,
       cards: sortedCards(cards, sortBy, values),
     );
+  }
+
+  List<CardLabel> _parseLabels(Object? labels) {
+    if (labels is! Map<String, dynamic>) return const [];
+    final nodes = (labels['nodes'] as List?) ?? [];
+    return nodes
+        .cast<Map<String, dynamic>>()
+        .map((l) => CardLabel(
+              name: l['name'] as String? ?? '',
+              colorHex: l['color'] as String? ?? 'd1d6de',
+            ))
+        .where((l) => l.name.isNotEmpty)
+        .toList();
+  }
+
+  static const _hiddenDisplayFields = {'Status', 'Start date'};
+
+  /// Extracts field values worth showing on the card: single-selects other
+  /// than Status (e.g. Priority) and dates (e.g. End date). Start date is
+  /// intentionally omitted — only the end date is useful on the card.
+  List<CardField> _parseDisplayFields(Object? fieldValues) {
+    final out = <CardField>[];
+    if (fieldValues is! Map<String, dynamic>) return out;
+    final nodes = (fieldValues['nodes'] as List?) ?? [];
+    for (final v in nodes.cast<Map<String, dynamic>>()) {
+      final fieldName =
+          ((v['field'] as Map<String, dynamic>?)?['name']) as String?;
+      if (fieldName == null || _hiddenDisplayFields.contains(fieldName)) {
+        continue;
+      }
+      if (v['optionId'] is String && v['name'] is String) {
+        out.add(CardField(
+          name: fieldName,
+          value: v['name'] as String,
+          color: v['color'] as String?,
+        ));
+      } else if (v['date'] is String) {
+        out.add(CardField(
+          name: fieldName,
+          value: _formatDate(v['date'] as String),
+          isDate: true,
+        ));
+      }
+    }
+    return out;
+  }
+
+  String _formatDate(String iso) {
+    final d = DateTime.tryParse(iso);
+    if (d == null) return iso;
+    return '${d.month}/${d.day}';
   }
 
   List<StatusOption> _parseOptions(Object? raw) {

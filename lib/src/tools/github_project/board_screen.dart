@@ -455,6 +455,20 @@ class _CardTile extends StatelessWidget {
                               ?.copyWith(color: theme.colorScheme.outline),
                         ),
                       ),
+                    if (card.labels.isNotEmpty || card.fields.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          children: [
+                            for (final label in card.labels)
+                              _labelChip(theme, label),
+                            for (final field in card.fields)
+                              _fieldChip(theme, field),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -463,6 +477,64 @@ class _CardTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _labelChip(ThemeData theme, CardLabel label) {
+    final color = _hexColor(label.colorHex);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.55)),
+      ),
+      child: Text(
+        label.name,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: Color.lerp(color, theme.colorScheme.onSurface, 0.35),
+        ),
+      ),
+    );
+  }
+
+  Widget _fieldChip(ThemeData theme, CardField field) {
+    // Single-select values (e.g. Priority) get their GitHub option color.
+    final accent = field.color != null ? statusColor(field.color) : null;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: accent?.withValues(alpha: 0.18) ??
+            theme.colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: accent?.withValues(alpha: 0.55) ??
+              theme.colorScheme.outlineVariant,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (field.isDate) ...[
+            Icon(Icons.event, size: 12, color: theme.colorScheme.outline),
+            const SizedBox(width: 3),
+          ],
+          Text(
+            field.value,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: accent != null
+                  ? Color.lerp(accent, theme.colorScheme.onSurface, 0.35)
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _hexColor(String hex) {
+    final v = int.tryParse(hex, radix: 16);
+    if (v == null) return const Color(0xFFD1D6DE);
+    return Color(0xFF000000 | v);
   }
 
   IconData get _kindIcon => switch (card.kind) {

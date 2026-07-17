@@ -34,6 +34,33 @@ CardKind cardKindFromTypename(String? typename) => switch (typename) {
       _ => CardKind.unknown,
     };
 
+/// A repository label attached to an issue/PR (name + GitHub hex color).
+class CardLabel {
+  const CardLabel({required this.name, required this.colorHex});
+
+  final String name;
+
+  /// 6-digit hex without '#', e.g. "d73a4a".
+  final String colorHex;
+}
+
+/// A project field value shown on the card (e.g. Priority, End date).
+class CardField {
+  const CardField({
+    required this.name,
+    required this.value,
+    this.isDate = false,
+    this.color,
+  });
+
+  final String name;
+  final String value;
+  final bool isDate;
+
+  /// GitHub option color enum (GRAY, BLUE, ...) for single-select values.
+  final String? color;
+}
+
 class BoardCard {
   const BoardCard({
     required this.itemId,
@@ -42,6 +69,8 @@ class BoardCard {
     this.number,
     this.url,
     this.statusOptionId,
+    this.labels = const [],
+    this.fields = const [],
   });
 
   final String itemId;
@@ -50,6 +79,10 @@ class BoardCard {
   final int? number;
   final String? url;
   final String? statusOptionId;
+  final List<CardLabel> labels;
+
+  /// Non-Status field values to display (single-selects and dates).
+  final List<CardField> fields;
 
   BoardCard withStatus(String? optionId) => BoardCard(
         itemId: itemId,
@@ -58,6 +91,8 @@ class BoardCard {
         number: number,
         url: url,
         statusOptionId: optionId,
+        labels: labels,
+        fields: fields,
       );
 }
 
