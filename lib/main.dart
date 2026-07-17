@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'src/shell/shell_scope.dart';
+import 'src/shell/theme_controller.dart';
 import 'src/tools/github_project/board_screen.dart';
 import 'src/tools/tool.dart';
 
@@ -25,33 +26,98 @@ final tools = <Tool>[
 
 void main() => runApp(const MyToolBoxApp());
 
-class MyToolBoxApp extends StatelessWidget {
+class MyToolBoxApp extends StatefulWidget {
   const MyToolBoxApp({super.key});
 
   @override
+  State<MyToolBoxApp> createState() => _MyToolBoxAppState();
+}
+
+class _MyToolBoxAppState extends State<MyToolBoxApp> {
+  final _theme = ThemeController();
+
+  @override
+  void initState() {
+    super.initState();
+    _theme.load();
+  }
+
+  @override
+  void dispose() {
+    _theme.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Tool Box Mobile',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2DA44E)),
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2DA44E),
-          brightness: Brightness.dark,
+    return ListenableBuilder(
+      listenable: _theme,
+      builder: (context, _) => MaterialApp(
+        title: 'Tool Box Mobile',
+        debugShowCheckedModeBanner: false,
+        themeMode: _theme.mode,
+        theme: ThemeData(
+          colorScheme:
+              ColorScheme.fromSeed(seedColor: const Color(0xFF2DA44E)),
+          useMaterial3: true,
         ),
-        useMaterial3: true,
+        darkTheme: _githubSoftDarkTheme(),
+        home: AppShell(theme: _theme),
       ),
-      home: const AppShell(),
     );
   }
 }
 
+/// Dark theme modeled on GitHub's "dark dimmed" (soft dark) palette.
+ThemeData _githubSoftDarkTheme() {
+  const canvas = Color(0xFF22272E); // canvas.default
+  const inset = Color(0xFF1C2128); // canvas.inset
+  const overlay = Color(0xFF2D333B); // canvas.overlay
+  const fg = Color(0xFFADBAC7); // fg.default
+  const fgMuted = Color(0xFF768390); // fg.muted
+  const border = Color(0xFF444C56); // border.default
+  const green = Color(0xFF57AB5A); // success.fg
+  const greenBtn = Color(0xFF347D39); // btn.primary.bg
+  const blue = Color(0xFF539BF5); // accent.fg
+
+  const scheme = ColorScheme.dark(
+    surface: canvas,
+    onSurface: fg,
+    surfaceContainerLowest: Color(0xFF171B21),
+    surfaceContainerLow: inset,
+    surfaceContainer: overlay,
+    surfaceContainerHigh: overlay,
+    surfaceContainerHighest: Color(0xFF373E47),
+    primary: green,
+    onPrimary: Colors.white,
+    primaryContainer: greenBtn,
+    onPrimaryContainer: Colors.white,
+    secondary: blue,
+    onSecondary: Color(0xFF0D1117),
+    outline: fgMuted,
+    outlineVariant: border,
+    onSurfaceVariant: fgMuted,
+    error: Color(0xFFE5534B),
+  );
+
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: scheme,
+    scaffoldBackgroundColor: canvas,
+    appBarTheme: const AppBarTheme(
+      backgroundColor: canvas,
+      foregroundColor: fg,
+    ),
+    cardTheme: const CardThemeData(color: canvas),
+    dividerColor: border,
+  );
+}
+
 /// Hosts the active tool and the side panel (drawer) for switching tools.
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, required this.theme});
+
+  final ThemeController theme;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -88,20 +154,28 @@ class _AppShellState extends State<AppShell> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(28, 24, 16, 16),
-          child: Row(
-            children: [
-              Icon(Icons.home_repair_service,
-                  color: theme.colorScheme.primary),
-              const SizedBox(width: 12),
-              Text('Tool Box Mobile', style: theme.textTheme.titleMedium),
-            ],
-          ),
+          child: Text('Tool Box', style: theme.textTheme.titleMedium),
         ),
         for (final t in tools)
           NavigationDrawerDestination(
             icon: t.icon,
             label: Text(t.name),
           ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(28, 16, 28, 8),
+          child: Divider(height: 1),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: SwitchListTile(
+            secondary: Icon(
+              widget.theme.isDark ? Icons.dark_mode : Icons.light_mode,
+            ),
+            title: const Text('ダークモード'),
+            value: widget.theme.isDark,
+            onChanged: (v) => widget.theme.setDark(v),
+          ),
+        ),
       ],
     );
   }
