@@ -166,14 +166,23 @@ class _AppShellState extends State<AppShell> {
           child: Divider(height: 1),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: SwitchListTile(
-            secondary: Icon(
-              widget.theme.isDark ? Icons.dark_mode : Icons.light_mode,
-            ),
-            title: const Text('ダークモード'),
-            value: widget.theme.isDark,
-            onChanged: (v) => widget.theme.setDark(v),
+          padding: const EdgeInsets.fromLTRB(28, 8, 28, 8),
+          child: SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(
+                value: false,
+                icon: Icon(Icons.light_mode_outlined),
+                label: Text('ライト'),
+              ),
+              ButtonSegment(
+                value: true,
+                icon: Icon(Icons.dark_mode_outlined),
+                label: Text('ダーク'),
+              ),
+            ],
+            selected: {widget.theme.isDark},
+            onSelectionChanged: (s) => widget.theme.setDark(s.first),
+            showSelectedIcon: false,
           ),
         ),
       ],
