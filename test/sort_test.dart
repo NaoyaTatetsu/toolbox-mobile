@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:tool_box_mobile/src/tools/github_project/models.dart';
+import 'package:toolbox_mobile/src/tools/github_project/models.dart';
 
 BoardCard card(String id, String title) => BoardCard(
       itemId: id,

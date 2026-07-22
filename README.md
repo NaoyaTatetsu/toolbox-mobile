@@ -4,7 +4,7 @@
 
 <h1 align="center">ToolBox</h1>
 
-自作ツールを詰め込む iPhone 向け Flutter アプリ(パッケージ名: `tool_box_mobile` / Bundle ID: `jp.p-jihyo.toolBoxMobile`)。サイドパネル(Drawer)からツールを切り替える構成で、今後ツールを追加していく。
+自作ツールを詰め込む iPhone 向け Flutter アプリ(パッケージ名: `toolbox_mobile` / Bundle ID: `jp.p-jihyo.toolBoxMobile`)。サイドパネル(Drawer)からツールを切り替える構成で、今後ツールを追加していく。
 
 ## ツール
 

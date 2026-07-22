@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:tool_box_mobile/src/shell/shell_scope.dart';
+import 'package:toolbox_mobile/src/shell/shell_scope.dart';
 
 void main() {
   testWidgets('ShellScope exposes openDrawer to descendants', (tester) async {
